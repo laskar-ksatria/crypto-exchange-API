@@ -35,6 +35,16 @@ const Account = require('../models/account');
 const User = require('../models/user');
 const LimitTrade = require('../models/limitTrade');
 
+
+Router.get('/check-lt', (req,res,next) => {
+    let price = 1
+    LimitTrade.find({price: {$gte: price}}).sort({price: 'desc'})
+        .then(trades => {
+            res.json(trades);
+        })
+})
+
+
 Router.get('/delete-account', (req,res,next) => {
     Account.deleteOne({_id: '5f38f3ffa2207a09dc84caea'})
         .then(() => res.send("Oke"))
@@ -54,7 +64,7 @@ Router.get('/inject', (req,res,next) => {
     User.create(data).then(user => res.status(200).json(user)).catch(err => res.json({message: err.message}))
 })
 //SANDBOX
-Router.get('/sandbox', (req,res,nexrt) => {
+Router.get('/sandbox', (req,res,next) => {
     let email = "laskar@mail.com";
     let newArr = [1,2,3,4,5,6];
     for (let i = 0; i < newArr.length; i++) {
