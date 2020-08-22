@@ -46,30 +46,6 @@ class TradeController {
             .then(trades => res.status(200).json(trades)).catch(next)
     };
 
-    static async deleteLimitOrder(req,res,next) {
-        let Io = req.Io;
-        let tradeId = req.params.tradeId;
-        let { first_currency, second_currency, order_type } = req.body;
-        let { _id,amount, price, user, pair } = await LimitTrade.findOneAndDelete({_id: tradeId});
-        let backBalance;
-        let objectText;
-        if (order_type === 'buy') {
-            backBalance = price * amount
-            objectText = second_currency
-        }else if (order_type === 'sell') {
-            backBalance = amount
-            objectText = first_currency
-        }
-        let updateAccount = await Account.findOneAndUpdate({user: user}, {
-            $inc: {[`${objectText}`]: backBalance}
-        }, {omitUndefined: true, new: true})
-        res.status(201).json({message: "Your order limit has been cancel"});
-        Io.emit(`${user}-${pair}-${DELETE_LIMIT}`, _id);
-        Io.emit(`${user}-${pair}-${UPDATE_ACCOUNT}`, updateAccount);
-        let limitTrades = await LimitTrade.find({pair})
-        Io.emit(`${pair}-${ALL_LIMIT}`, limitTrades);
-    };
-
     static async createBuyLimit(req,res,next) {
         let Io = req.Io;
         let user = req.decoded.id;
@@ -468,6 +444,8 @@ class TradeController {
         let myAccount = await Account.findOneAndUpdate({user}, {
             $inc: {[objectText]: total}
         }, {omitUndefined: true, new: true});
+
+        res.status(202).json({message: 'Your limit order has been cancel'})
 
         Io.emit(`${user}-${UPDATE_ACCOUNT}`, myAccount);
         let allLimitTrades = await LimitTrade.find({pair})

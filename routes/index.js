@@ -26,6 +26,7 @@ Router.get('/trade/limit', TradeController.readAllLimit)
 Router.post('/trade/limit/buy', userAuthCookie, TradeController.createBuyLimit, TradeController.checkBuyLimit)
 Router.post('/trade/limit/sell', userAuthCookie, TradeController.createSellLimit, TradeController.checkSellLimit)
 Router.get('/trade/limit/myLimitTrade', userAuthCookie, TradeController.readMyLimit);
+Router.delete('/trade/limit/:limitId', userAuthCookie, TradeController.deleteLimit)
 
 //MarketTrade
 
