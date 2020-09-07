@@ -26,7 +26,16 @@ app.use((req,res,next) => {
     next();
 });
 
-app.use(require('./routes'))
+// app.use(require('./routes'))
+app.get('/gettoken', (req,res,next) => {
+    res.cookie('hallo', "12345678");
+})
+
+app.get('/checktoken', (req,res,next) => {
+    console.log(req.cookies.hallo)
+    res.status(200).json({token: req.cookies.hallo})
+})
+
 app.use(require('./middlewares/errorHandler'));
 
 server.listen(PORT, () => console.log(`Server started on ${PORT}`))
