@@ -22,13 +22,13 @@ app.use(express.urlencoded({extended: false}));
 app.use((req,res,next) => {
     req.Io = Io;
     // req.redisClient = RedisClient;
-    console.log(req.cookies.exchangetoken, "Exchange... coookie")
     next();
 });
 
 // app.use(require('./routes'))
 app.get('/gettoken', (req,res,next) => {
     res.cookie('hallo', "12345678");
+    res.status(200).json({message: "Cookie set"})
 })
 
 app.get('/checktoken', (req,res,next) => {
