@@ -22,7 +22,7 @@ app.use(express.urlencoded({extended: false}));
 app.use((req,res,next) => {
     req.Io = Io;
     // req.redisClient = RedisClient;
-    console.log(req.cookies)
+    console.log(req.cookies.exchange, "Exchange... coookie")
     next();
 });
 

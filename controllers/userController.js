@@ -32,10 +32,10 @@ class UserController {
                 if (user) {
                     let result = checkHashingPass(password, user.password);
                     if (result) {
-                        const domain = 'localhost'
                         let token = generateToken({id: user.id});
-                        res.cookie('XSRF-TOKEN', req.csrfToken(), {httpOnly: false, domain: domain, path: '/'})
-                        res.cookie("exchangetoken", token, {httpOnly: false, domain: domain, path: '/'});
+                        res.cookie('XSRF-TOKEN', req.csrfToken())
+                        res.cookie("exchangetoken", token);
+                        console.log(req.csrfToken())
                         res.status(202).json({message: `Welcome ${user.full_name}`, user})
                     }else {
                         next({message: "Invalid email / password"})
