@@ -25,13 +25,15 @@ class UserController {
 
     static login(req, res, next) {
         let { email, password } = req.body;
+        console.log(req.body)
         User.findOne({email}).populate('account')
             .then(user => {
                 if (user) {
                     let result = checkHashingPass(password, user.password);
                     if (result) {
                         let token = generateToken({id: user.id});
-                        res.cookie("exchangetoken", token, {httpOnly: true, path: '/'})
+                        res.cookie('XSRF-TOKEN', req.csrfToken())
+                        res.cookie("exchangetoken", token);
                         res.status(202).json({message: `Welcome ${user.full_name}`, user})
                     }else {
                         next({message: "Invalid email / password"})
@@ -58,7 +60,7 @@ class UserController {
         }else {
             res.status(400).json({message: "You must login first"})
         }
-    }
+    };
 
 };
 

@@ -452,6 +452,15 @@ class TradeController {
         Io.emit(`${pair}-${ALL_LIMIT}`, allLimitTrades);
     }
 
+    static readAll(req,res,next) {
+        let pair = req.query.pair;
+        if (pair) {
+            LimitTrade.find({pair}).then(limitTrades => res.status(200).json(limitTrades))
+        }else {
+            LimitTrade.find({}).then(limitTrades => res.status(200).json(limitTrades))
+        }
+    };
+
 };
 
 module.exports = TradeController;
