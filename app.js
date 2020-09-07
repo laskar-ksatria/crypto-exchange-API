@@ -15,7 +15,7 @@ const cookieParser = require('cookie-parser');
 require('./db.config')();
 
 app.use(cookieParser());
-app.use(cors({credentials: true, origin: ['http://localhost:3000', 'http://localhost:3001']}));
+app.use(cors({credentials: true, origin: "*"}));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
