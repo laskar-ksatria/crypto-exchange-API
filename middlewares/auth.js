@@ -11,6 +11,7 @@ const userAuthentication = (req,res,next) => {
 
 const userAuthCookie = (req,res,next) => {
     if (req.cookies) {
+        console.log("Masuk use auth")
         let decoded = verifyToken(req.cookies.exchangetoken)
         req.decoded = decoded
         next();

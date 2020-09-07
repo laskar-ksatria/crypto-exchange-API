@@ -15,14 +15,14 @@ const cookieParser = require('cookie-parser');
 require('./db.config')();
 
 app.use(cookieParser());
-app.use(cors({credentials: true, origin: "http://localhost:3000"}));
+app.use(cors({credentials: true, origin: ["http://localhost:3000", "localhost"]}));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
 app.use((req,res,next) => {
     req.Io = Io;
     // req.redisClient = RedisClient;
-    console.log(req.cookies.exchange, "Exchange... coookie")
+    console.log(req.cookies.exchangetoken, "Exchange... coookie")
     next();
 });
 
