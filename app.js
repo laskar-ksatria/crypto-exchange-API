@@ -25,6 +25,9 @@ app.use((req,res,next) => {
 });
 
 // app.use(require('./routes'))
+app.get('/', (req,res,next) => {
+    res.status(200).json({message: "We are connected"})
+})
 app.get('/gettoken', (req,res,next) => {
     res.cookie('myexchange', "123456")
 })
