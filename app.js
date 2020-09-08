@@ -14,8 +14,8 @@ const cookieParser = require('cookie-parser');
 //Db connect
 require('./db.config')();
 
-app.use(cors({credentials: true, origin: ["http://localhost:3000", "localhost"]}));
-app.use(cookieParser("123456"));
+app.use(cors({credentials: true, origin: ["http://localhost:3000"]}));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
@@ -26,15 +26,21 @@ app.use((req,res,next) => {
 
 // app.use(require('./routes'))
 app.get('/gettoken', (req,res,next) => {
-    console.log("Masuk get toen")
-    res.cookie('hallo', "12345678", {httpOnly: true, signed: true, secret: '123456', sameSite: true});
-    res.status(200).json({message: "Cookie set"});
+    res.cookie('myexchange', "123456")
 })
 
 app.get('/checktoken', (req,res,next) => {
-    console.log(req.signedCookies.hallo)
-    res.status(200).json({token: req.signedCookies.hallo})
+    let token = req.cookies.myexchange;
+    if (token) {
+        res.status(200).json({token});
+    }else {
+        res.status(500).json({message: "Token not valid"})
+    }
 });
+
+app.get('/clearcookie', (req,res,next) => {
+    res.clearCookie('myexchange');
+})
 
 app.use(require('./middlewares/errorHandler'));
 
