@@ -27,13 +27,13 @@ app.use((req,res,next) => {
 // app.use(require('./routes'))
 app.get('/gettoken', (req,res,next) => {
     console.log("Masuk get toen")
-    res.cookie('hallo', "12345678", {signed: true});
+    res.cookie('hallo', "12345678", {httpOnly: true, signed: true, secret: '123456'});
     res.status(200).json({message: "Cookie set"});
 })
 
 app.get('/checktoken', (req,res,next) => {
-    console.log(req.signedCookies)
-    res.status(200).json({token: req.signedCookies})
+    console.log(req.signedCookies.hallo)
+    res.status(200).json({token: req.signedCookies.hallo})
 });
 
 app.use(require('./middlewares/errorHandler'));
