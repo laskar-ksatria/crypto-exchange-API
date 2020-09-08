@@ -30,10 +30,12 @@ app.get('/', (req,res,next) => {
 })
 app.get('/gettoken', (req,res,next) => {
     res.cookie('myexchange', "123456")
+    res.status(200).json({message: "Cookie set"})
 })
 
 app.get('/checktoken', (req,res,next) => {
     let token = req.cookies.myexchange;
+    console.log(req.cookies)
     if (token) {
         res.status(200).json({token});
     }else {
@@ -43,6 +45,8 @@ app.get('/checktoken', (req,res,next) => {
 
 app.get('/clearcookie', (req,res,next) => {
     res.clearCookie('myexchange');
+    res.clearCookie('hallo');
+    res.clearCookie('_csrf')
     res.status(200).json({message: "Cookie already clear"})
 })
 
