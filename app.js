@@ -14,27 +14,27 @@ const cookieParser = require('cookie-parser');
 //Db connect
 require('./db.config')();
 
-app.use(cookieParser());
 app.use(cors({credentials: true, origin: ["http://localhost:3000", "localhost"]}));
+app.use(cookieParser("123456"));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
 app.use((req,res,next) => {
     req.Io = Io;
-    // req.redisClient = RedisClient;
     next();
 });
 
-app.use(require('./routes'))
-// app.get('/gettoken', (req,res,next) => {
-//     res.cookie('hallo', "12345678");
-//     res.status(200).json({message: "Cookie set"})
-// })
+// app.use(require('./routes'))
+app.get('/gettoken', (req,res,next) => {
+    console.log("Masuk get toen")
+    res.cookie('hallo', "12345678", {signed: true});
+    res.status(200).json({message: "Cookie set"});
+})
 
-// app.get('/checktoken', (req,res,next) => {
-//     console.log(req.cookies.hallo)
-//     res.status(200).json({token: req.cookies.hallo})
-// })
+app.get('/checktoken', (req,res,next) => {
+    console.log(req.signedCookies)
+    res.status(200).json({token: req.signedCookies})
+});
 
 app.use(require('./middlewares/errorHandler'));
 
