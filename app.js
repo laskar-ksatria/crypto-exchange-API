@@ -15,9 +15,6 @@ const cookieParser = require('cookie-parser');
 require('./db.config')();
 
 app.use((req,res,next) => {
-    res.header('Access-Control-Allow-Origin', "http://localhost:3000");
-    res.header('Access-Control-Allow-Credentials', true);
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     req.Io = Io;
     next();
 });
@@ -47,10 +44,7 @@ app.get('/checktoken', (req,res,next) => {
 });
 
 app.get('/clearcookie', (req,res,next) => {
-    res.clearCookie('myexchange');
-    res.clearCookie('hallo');
-    res.clearCookie('_csrf')
-    res.status(200).json({message: "Cookie already clear"})
+    
 })
 
 app.use(require('./middlewares/errorHandler'));
