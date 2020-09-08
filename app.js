@@ -1,6 +1,4 @@
-if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV === 'development') {
-    require('dotenv').config();
-};
+require('dotenv').config();
 
 const PORT = process.env.PORT;
 const cors = require('cors');
@@ -33,6 +31,7 @@ app.get('/gettoken', (req,res,next) => {
     res.status(200).json({message: "Cookie set"})
 })
 
+
 app.get('/checktoken', (req,res,next) => {
     let token = req.cookies.myexchange;
     console.log(req.cookies)
@@ -43,8 +42,8 @@ app.get('/checktoken', (req,res,next) => {
     }
 });
 
-app.get('/clearcookie', (req,res,next) => {
-    
+app.get('/cleartoken', (req,res,next) => {
+    res.clearCookie('myexchange')
 })
 
 app.use(require('./middlewares/errorHandler'));
