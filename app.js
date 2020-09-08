@@ -16,11 +16,24 @@ app.use((req,res,next) => {
     req.Io = Io;
     next();
 });
-app.use(cors({credentials: true, origin: ["http://localhost:3000"]}));
+
+const whiteList = ["http://localhost:3000", "http://localhost:3001"];
+
+const corsOptions = {
+    origin: function (origin, cb) {
+      if (whiteList.indexOf(origin) !== -1) {
+        cb(null, true)
+      } else {
+        cb(new Error('Not allowed by CORS'))
+      }
+    },
+    credentials: true
+  };
+
+app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
-
 
 // app.use(require('./routes'))
 app.get('/', (req,res,next) => {
@@ -30,7 +43,6 @@ app.get('/gettoken', (req,res,next) => {
     res.cookie('myexchange', "123456")
     res.status(200).json({message: "Cookie set"})
 })
-
 
 app.get('/checktoken', (req,res,next) => {
     let token = req.cookies.myexchange;

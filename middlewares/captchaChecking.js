@@ -19,4 +19,4 @@ const captchaVerify = (req,res, next) => {
     })
 };
 
-module.exports = {captchaVerify};
+module.exports = { captchaVerify };
