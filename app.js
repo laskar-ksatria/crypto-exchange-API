@@ -43,6 +43,7 @@ app.get('/checktoken', (req,res,next) => {
 
 app.get('/clearcookie', (req,res,next) => {
     res.clearCookie('myexchange');
+    res.status(200).json({message: "Cookie already clear"})
 })
 
 app.use(require('./middlewares/errorHandler'));
