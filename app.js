@@ -19,18 +19,8 @@ app.use((req,res,next) => {
 
 const whiteList = ["http://localhost:3000", "http://localhost:3001"];
 
-const corsOptions = {
-    origin: function (origin, cb) {
-      if (whiteList.indexOf(origin) !== -1) {
-        cb(null, true)
-      } else {
-        cb(new Error('Not allowed by CORS'))
-      }
-    },
-    credentials: true
-  };
 
-app.use(cors(corsOptions));
+app.use(cors({ credentials: true, origin: whiteList }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
