@@ -27,7 +27,7 @@ app.use((req,res,next) => {
 // app.use(require('./routes'))
 app.get('/gettoken', (req,res,next) => {
     console.log("Masuk get toen")
-    res.cookie('hallo', "12345678", {httpOnly: true, signed: true, secret: '123456'});
+    res.cookie('hallo', "12345678", {httpOnly: true, signed: true, secret: '123456', sameSite: true});
     res.status(200).json({message: "Cookie set"});
 })
 
