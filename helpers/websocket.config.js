@@ -8,15 +8,16 @@ function walkingWithWebSocket(Io) {
     ccStreamer.on('open', function open() {
         var subRequest = {
             "action": "SubAdd",
-            "subs": ["5~CCCAGG~BTC~USD", "5~CCCAGG~BTC~ETH", "5~CCCAGG~ETH~USD", "5~CCCAGG~BTC~LTC"]
+            "subs": ["2~Coinbase~BTC~USD", "2~Coinbase~LTC~USD", "2~Coinbase~ETH~USD", "2~Coinbase~BNB~USD"]
         };
         ccStreamer.send(JSON.stringify(subRequest));
     });
 
     ccStreamer.on('message', function incoming(data) {
-        let { PRICE, FROMSYMBOL, TOSYMBOL } = JSON.parse(data);
-        if (PRICE && FROMSYMBOL && TOSYMBOL) {
-            Io.emit(`${FROMSYMBOL}${TOSYMBOL}-price`, PRICE);
+        // console.log(JSON.parse(data));
+        let { PRICE, FROMSYMBOL, TOSYMBOL, VOLUME24HOUR } = JSON.parse(data);
+        if (PRICE && FROMSYMBOL && TOSYMBOL, VOLUME24HOUR) {
+            Io.emit(`realtime-price`, {PRICE, FROMSYMBOL, TOSYMBOL, VOLUME24HOUR});
         }
     });
 };
