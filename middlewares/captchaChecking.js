@@ -12,8 +12,10 @@ const captchaVerify = (req,res, next) => {
     })
     .then(({data}) => {
         if (data.success) {
+            console.log(data);
             next();
         }else {
+            console.log("Hallo")
             next({message: 'Captcha is not valid'});
         }
     })

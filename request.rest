@@ -1,7 +1,0 @@
-GET http://localhost:3070/getcookie
-Content-Type: application/
-
-#With valid
-GET http://localhost:3070/islogin
-Cookie: 
-

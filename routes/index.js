@@ -6,6 +6,9 @@ const UserController = require('../controllers/userController');
 const AccountController = require('../controllers/accountController');
 const TradeController = require('../controllers/tradeController');
 const CryptoController = require('../controllers/cryptoController');
+const buyController = require('../controllers/trade/buyController');
+const sellController = require('../controllers/trade/sellController');
+
 //middleware
 const { userAuthentication, userAuthCookie } = require('../middlewares/auth');
 const { captchaVerify } = require('../middlewares/captchaChecking');
@@ -16,33 +19,34 @@ const { cryptoCache } = require('../middlewares/redis')
 //-------------------- X -------------------------- ROUTER ---------------------------- X --------------------------//
 //User
 Router.get('/users', UserController.readAll);
-Router.get('/users/myauth', csurfProtection,userAuthCookie, UserController.readMe);
+Router.get('/users/myauth',userAuthentication,UserController.readMe);
 Router.post('/users', captchaVerify,UserController.create);
-Router.post('/users/login', csurfProtection,UserController.login);
-Router.get('/users/logout', csurfProtection,userAuthCookie,UserController.logout);
-Router.get('/users/checkauth',csurfProtection,userAuthCookie,UserController.checkAuth);
+Router.post('/users/login',UserController.login);
+Router.get('/users/logout', userAuthentication,UserController.logout);
+Router.get('/users/checkauth',userAuthentication,UserController.checkAuth);
 
 //Account
 Router.get('/accounts',AccountController.readAll);
-Router.get('/myAccount', csurfProtection,userAuthCookie, AccountController.readMyAccount);
-Router.get('/account',userAuthCookie,csurfProtection, AccountController.createAccount);
+Router.get('/myAccount', userAuthentication, AccountController.readMyAccount);
+Router.get('/account',userAuthentication, AccountController.createAccount);
 
 //LimitTrade
-Router.get('/trade/limit', TradeController.readAllLimit);
-Router.post('/trade/limit/buy', csurfProtection,userAuthCookie, TradeController.createBuyLimit, TradeController.checkBuyLimit)
-Router.post('/trade/limit/sell', csurfProtection,userAuthCookie, TradeController.createSellLimit, TradeController.checkSellLimit)
-Router.get('/trade/limit/myLimitTrade', csurfProtection,userAuthCookie, TradeController.readMyLimit);
-Router.delete('/trade/limit/:limitId', csurfProtection,userAuthCookie, TradeController.deleteLimit)
+Router.get('/trade/limit',TradeController.readAllLimit);
+Router.post('/trade/limit/buy', userAuthentication, buyController.createBuyLimit, buyController.checkBuyLimit)
+Router.post('/trade/limit/sell', userAuthentication, sellController.createSellLimit, sellController.checkSellLimit)
+Router.get('/trade/limit/myLimitTrade', userAuthentication, TradeController.readMyLimit);
+Router.delete('/trade/limit/:limitId', userAuthentication, TradeController.deleteLimit)
+
 
 //MarketTrade
 Router.get('/trade/market', TradeController.readAllMarket);
-Router.post('/trade/market/buy', csurfProtection, userAuthCookie, TradeController.createBuyMarket);
-Router.post('/trade/limit/sell', csurfProtection, userAuthCookie, TradeController.createSellMarket);
+Router.post('/trade/market/buy', userAuthentication, TradeController.createBuyMarket);
+Router.post('/trade/limit/sell', userAuthentication, TradeController.createSellMarket);
 
 //Crypto
-Router.get('/cryptoprice', csurfProtection, userAuthCookie,CryptoController.getCryptoData);
-//Demo
-Router.get('/cryptoData', cryptoCache,CryptoController.getCryptoData);
+Router.get('/cryptoprice', userAuthentication,CryptoController.getCryptoData);
+// //Demo
+// Router.get('/cryptoData', cryptoCache,CryptoController.getCryptoData);
 
 
 
@@ -54,6 +58,7 @@ Router.get('/cryptoData', cryptoCache,CryptoController.getCryptoData);
 const Account = require('../models/account');
 const User = require('../models/user');
 const LimitTrade = require('../models/limitTrade');
+const History = require('../models/history');
 
 function RedisCache(client, cb) {
     client.get('laskar', function (err, data) {

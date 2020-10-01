@@ -15,7 +15,6 @@ class UserController {
     };
 
     static create(req,res,next) {
-        console.log(req.body)
         let { email, full_name, password, confirm_password } = req.body;
         User.create({email, full_name, password, confirm_password})
             .then(user => {
@@ -26,17 +25,15 @@ class UserController {
 
     static login(req, res, next) {
         let { email, password } = req.body;
-        console.log(req.body)
         User.findOne({email}).populate('account')
             .then(user => {
                 if (user) {
                     let result = checkHashingPass(password, user.password);
                     if (result) {
                         let token = generateToken({id: user.id});
-                        res.cookie('XSRF-TOKEN', req.csrfToken())
-                        res.cookie("exchangetoken", token);
-                        console.log(req.csrfToken())
-                        res.status(202).json({message: `Welcome ${user.full_name}`, user})
+                        // res.cookie('XSRF-TOKEN', req.csrfToken());
+                        // res.cookie("exchangetoken", token);
+                        res.status(202).json({message: `Welcome ${user.full_name}`, user, token});
                     }else {
                         next({message: "Invalid email / password"})
                     }

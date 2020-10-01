@@ -2,7 +2,6 @@ const LimitTrade = require('../models/limitTrade');
 const History = require('../models/history');
 const Account = require('../models/account');
 const { generateText } = require('../helpers/utilities');
-const { findOneAndDelete } = require('../models/limitTrade');
 
 const DELETE_LIMIT = `deletemylimit`;
 const ADD_HISTORY = 'addmyhistory';
@@ -18,7 +17,9 @@ class TradeController {
     static readAllLimit(req,res,next) {
         let { pair } = req.query;   
         if (pair) {
-            LimitTrade.find({pair}).then(trades => res.status(200).json(trades)).catch(next)
+            LimitTrade.find({pair}).then(trades => {
+                res.status(200).json(trades)
+            }).catch(next)
         }else {
             LimitTrade.find({}).then(trades => res.status(200).json(trades)).catch(next)
         }
@@ -54,7 +55,6 @@ class TradeController {
         let amount = Number(req.body.amount);
         let total = price * amount;
         let objectText = generateText(second_currency)
-        
         let myAccount = await Account.findOne({user})
         if (myAccount) {
             let myBalance = myAccount[objectText];
@@ -76,18 +76,15 @@ class TradeController {
                 Io.emit(`${pair}-${ALL_LIMIT}`, trades);
                 next();
             }else {
-                console.log("Masuk Trade")
+                next({message: "You dont have enough balance"})
             }
         }else {
-            console.log('myAccount')
             next({message: "You dont have account"})
         }
-
-
     };
 
+
     static async checkBuyLimit(req,res,next) {
-        console.log("masuk check buy")
         let Io = req.Io;
         let user = req.decoded.id;
         let myTrade = req.myTrade;
@@ -97,11 +94,11 @@ class TradeController {
         let objectText = generateText(first_currency);
         let objectText2 = generateText(second_currency);
 
-        let filterTrades = await LimitTrade.find({pair, order_type: 'sell', price: {$lte: price}}).sort({price: 'desc'})
+        let filterTrades = await LimitTrade.find({user: {$ne: user},pair, order_type: 'sell', price: {$lte: price}}).sort({price: 'desc'})
+        let amountStart = 0;
+        let amountLimit = amount;
         for (let i = 0; i < filterTrades.length; i++) {
             let item = filterTrades[i];
-            let amountStart = 0;
-            let amountLimit = amount;
             let otherHistory;
             let otherAccount;
             let otherUpdateLimit;
@@ -112,7 +109,6 @@ class TradeController {
             amountStart += item.amount;
 
             if (amountStart < amountLimit) {
-
                 //OTHER PROCESS
                 let { _id } = await LimitTrade.findOneAndDelete({_id: item.id});
                 otherAccount = await Account.findOneAndUpdate({user: item.user}, {
@@ -122,7 +118,8 @@ class TradeController {
 
                 //MY PROCESS
                 let filledPlus = amountStart / amountLimit;
-                let surplus = (item.amount * myTrade.price) - (item.amount * item.price)
+                let surplus = (myTrade.amount * myTrade.price) - (item.amount * item.price);
+                
                 myUpdateLimit = await LimitTrade.findOneAndUpdate({_id: myTrade.id}, {
                     $inc: {amount: -item.amount, amount_start: item.amount},total: (amountLimit - amountStart) * myTrade.price, filled: filledPlus
                 }, {omitUndefined: true, new: true})
@@ -135,10 +132,10 @@ class TradeController {
                 //socket.Io
                 Io.emit(`${item.user}-${pair}-${DELETE_LIMIT}`, _id);
                 Io.emit(`${item.user}-${pair}-${ADD_HISTORY}`, otherHistory);
-                Io.emit(`${item.user}-${pair}-${UPDATE_ACCOUNT}`, otherAccount);
+                Io.emit(`${item.user}-${UPDATE_ACCOUNT}`, otherAccount);
 
                 Io.emit(`${myTrade.user}-${pair}-${UPDATE_LIMIT}`, myUpdateLimit);
-                Io.emit(`${myTrade.iser}-${pair}-${UPDATE_ACCOUNT}`, myAccount);
+                Io.emit(`${myTrade.iser}-${UPDATE_ACCOUNT}`, myAccount);
                 Io.emit(`${myTrade.user}-${pair}-${ADD_HISTORY}`, myHistory);
 
             }else if (amountStart === amountLimit) {
@@ -150,9 +147,10 @@ class TradeController {
                 otherHistory = await History.create({user: item.user, amount: item.amount, price: item.price, order_type: item.order_type, pair: item.pair})
                 
                 //MY PROCESS
+                let surplus = (myTrade.amount * myTrade.price) - (item.amount * item.price);
                 let deletedLimit  = await LimitTrade.findOneAndDelete({_id: myTrade.id})
                 myAccount = await Account.findOneAndUpdate({user: myTrade.user}, {
-                    $inc: {[objectText]: item.amount}
+                    $inc: {[objectText]: item.amount, [objectText2]: surplus}
                 }, {omitUndefined: true, new: true})
                 myHistory = await History.create({user: myTrade.user, amount: item.amount, order_type: myTrade.order_type, pair: myTrade.pair, price: item.price})
                 
@@ -174,10 +172,12 @@ class TradeController {
                 let newFilled = (amount_start + minusBalance) / amount_limit;
 
                 //Other Process
-                otherUpdateLimit = await LimitTrade.findOneAndDelete({_id: item.id}, {
+                otherUpdateLimit = await LimitTrade.findOneAndUpdate({_id: item.id}, {
                     $inc: {amount: -minusBalance, amount_start: minusBalance}, filled: newFilled
                 }, {omitUndefined: true, new:true})
-                otherAccount = await Account.findOneAndDelete({user: item.user}, {}, {});
+                otherAccount = await Account.findOneAndUpdate({user: item.user}, {
+                   $inc: {[objectText2]: minusBalance * myTrade.price}
+                }, {omitUndefined: true, new:true});
                 otherHistory = await History.create({user: item.user, amount: item.amount, price: item.price, order_type: item.order_type, pair: item.pair})
                 
                 //My Process
@@ -194,20 +194,21 @@ class TradeController {
                 Io.emit(`${item.user}-${pair}-${ADD_HISTORY}`, otherHistory);
                 Io.emit(`${myTrade.user}-${pair}-${ADD_HISTORY}`, myHistory);
 
-                Io.emit(`${item.user}-${pair}-${UPDATE_ACCOUNT}`, otherAccount);
-                Io.emit(`${myTrade.user}-${pair}-${UPDATE_ACCOUNT}`, myHistory);
+                Io.emit(`${item.user}-${UPDATE_ACCOUNT}`, otherAccount);
+                Io.emit(`${myTrade.user}-${UPDATE_ACCOUNT}`, myAccount);
 
             }
             
-            let limitTrades = await LimitTrade.find({pair})
-            let allHistory = await History.find({pair});
-
-            Io.emit(`${pair}-limit`, limitTrades);
-            Io.emit(`${pair}-market`, allHistory);
-
+            
         };//END LOOPING
+        let limitTrades = await LimitTrade.find({pair})
+        let allHistory = await History.find({pair});
+
+        Io.emit(`${pair}-limit`, limitTrades);
+        Io.emit(`${pair}-market`, allHistory);
         
     };
+
 
     static async createSellLimit(req,res,next) {
         let Io = req.Io
@@ -226,12 +227,12 @@ class TradeController {
                 let myTrade = await LimitTrade.create({pair,user, amount, price, first_currency, second_currency, amount_limit: amount, total: amount * price, order_type})
                 req.myTrade = myTrade;
                 const updateMyAccount = await Account.findOneAndUpdate({user}, { $inc: {[objectText]: -amount} }, {omitUndefined: true, new: true})
-                let allTrades = await LimitTrade.find({pair}).sort({})
+                let allTrades = await LimitTrade.find({pair})
                 Io.emit(`${pair}-${ALL_LIMIT}`, allTrades);
                 Io.emit(`${user}-${UPDATE_ACCOUNT}`, updateMyAccount);
                 Io.emit(`${user}-${pair}-${ADD_LIMIT}`, myTrade);
                 res.status(200).json({message: 'Your order has been created'})
-                // next();
+                next();
             }
         }else {
             next({message: `You dont have account`})
@@ -241,14 +242,14 @@ class TradeController {
     static async checkSellLimit(req,res,next) {
         let Io = req.Io;
         let myTrade = req.myTrade;
-        let { order_type, first_currency, second_currency } = req.body
+        
+        let { order_type, first_currency, second_currency, pair } = req.body
         let amount = Number(req.body.amount);
         let price = Number(req.body.price);
         let objectText = generateText(first_currency);
         let objectText2 = generateText(second_currency);
 
-        let filterTrade = await LimitTrade.find({pair, price: {$gte: price}, order_type: 'buy'}).sort({price: 'desc'})
-        
+        let filterTrade = await LimitTrade.find({user: {$ne: myTrade.user},pair, price: {$gte: price}, order_type: 'buy'}).sort({price: 'desc'})
         //LOOP filter trade
         if (filterTrade.length > 0) {
                 let amountStart = 0;
@@ -295,7 +296,6 @@ class TradeController {
                     Io.emit(`${myTrade.user}-${pair}-${ADD_HISTORY}`, myHistory);
                     //--Limit
                     Io.emit(`${item.user}-${pair}-${DELETE_LIMIT}`, _id);
-                    Io.emit(`${myTrade.user}-${pair}-${UPDATE_LIMIT}`, myUpdateLimit);
                     //--Account
                     Io.emit(`${item.user}-${UPDATE_ACCOUNT}`, otherAccount);
                     Io.emit(`${myTrade.user}-${UPDATE_ACCOUNT}`, myAccount);
@@ -321,15 +321,14 @@ class TradeController {
                     Io.emit(`${item.user}-${pair}-${ADD_HISTORY}`, otherHistory);
                     Io.emit(`${myTrade.user}-${pair}-${ADD_HISTORY}`, myHistory);
                     //--Account
-                    Io.emit(`${item.user}-${pair}-${UPDATE_ACCOUNT}`, otherAccount);
-                    Io.emit(`${myTrade.user}-${pair}-${UPDATE_ACCOUNT}`, myAccount);
+                    Io.emit(`${item.user}-${UPDATE_ACCOUNT}`, otherAccount);
+                    Io.emit(`${myTrade.user}-${UPDATE_ACCOUNT}`, myAccount);
                     //LimitTrade
                     Io.emit(`${item.user}-${pair}-${DELETE_LIMIT}`, _id);
-                    Io.emit(`${myTrade.user}-${pair}-${DELETE_LIMIT}`, deleteTrade.id);
 
                 }else { //amountStart > amountLimit
                     let minusOtherBalance = item.amount - (amountStart - amountLimit);
-                    filledPlus = minusOtherBalance / myTrade.amount_limit;
+                    filledPlus = minusOtherBalance / item.amount_limit;
                     //OTHER DATA
                     otherUpdateLimit = await LimitTrade.findOneAndUpdate({_id: item.id}, {
                         $inc: {amount: -minusOtherBalance, filled: filledPlus, amount_start: minusOtherBalance }
@@ -348,19 +347,18 @@ class TradeController {
                     Io.emit(`${myTrade.user}-${pair}-${ADD_HISTORY}`, myHistory);
                     //update-limit
                     Io.emit(`${item.user}-${pair}-${UPDATE_LIMIT}`, otherUpdateLimit);
-                    Io.emit(`${myTrade.user}-${pair}-${DELETE_LIMIT}`, _id);
                     //Account
-                    Io.emit(`${item.user}-${pair}-${UPDATE_ACCOUNT}`, otherAccount);
-                    Io.emit(`${myTrade.user}-${pair}-${UPDATE_ACCOUNT}`, myAccount);
+                    Io.emit(`${item.user}-${UPDATE_ACCOUNT}`, otherAccount);
+                    Io.emit(`${myTrade.user}-${UPDATE_ACCOUNT}`, myAccount);
 
                 };
             };
 
-            let allLimitTrades = await LimitTrade.find({pair});
-            let allHistory = await History.find({pair});
-            Io.emit(`${pair}-${ALL_LIMIT}`, allLimitTrades);
-            Io.emit(`${pair}-${ALL_HISTORY}`, allHistory);
         }
+        let allLimitTrades = await LimitTrade.find({pair});
+        let allHistory = await History.find({pair});
+        Io.emit(`${pair}-${ALL_LIMIT}`, allLimitTrades);
+        Io.emit(`${pair}-${ALL_HISTORY}`, allHistory);
     }
 
     static async createBuyMarket(req, res,next) {

@@ -15,7 +15,7 @@ class AccountController {
     static createAccount(req,res,next) {
         let user = req.decoded.id;
         let newAccount;
-        Account.create({user, BTC_coin: 20, balance: 100000, ETH_coin: 20, LTC_coin: 20})
+        Account.create({user, BTC_coin: 70, balance: 50, ETH_coin: 70, LTC_coin: 70})
             .then(account => {
                 newAccount = account
                 User.updateOne({_id: user}, {account: account.id}, {omitUndefined: true})
