@@ -31,5 +31,6 @@ app.use(require('./middlewares/errorHandler'));
 server.listen(PORT, () => console.log(`Server started on ${PORT}`))
 
 Io.on('connection', socket => {
+    console.log('IO connect')
     socket.on(`disconnect`, () => {})
 })
