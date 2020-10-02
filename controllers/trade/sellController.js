@@ -133,10 +133,10 @@ class SellController {
                         let newFiled = myTrade.amount / item.amount_limit;
                         //Other
                         await LimitTrade.updateOne({_id: item.id}, {
-                            $inc: {amount: myTrade.amount, total: (myTrade.amount * item.price), filled: newFiled}
+                            $inc: {amount: -myTrade.amount, total: (myTrade.amount * item.price), filled: newFiled}
                         }, {omitUndefined: true});
                         await Account.updateOne({user: item.user}, {
-                            $inc: {[objectText]: myTrade.amount, [objectText2]: surplus}
+                            $inc: {[objectText2]: surplus}
                         }, {omitUndefined: true})
                         await History.create({
                             user: item.user,
