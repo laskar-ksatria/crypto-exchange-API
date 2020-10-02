@@ -12,11 +12,10 @@ function walkingWithWebSocket(Io) {
         };
         ccStreamer.send(JSON.stringify(subRequest));
     });
-
     ccStreamer.on('message', function incoming(data) {
-        // console.log(JSON.parse(data));
         let { PRICE, FROMSYMBOL, TOSYMBOL, VOLUME24HOUR } = JSON.parse(data);
         if (PRICE && FROMSYMBOL && TOSYMBOL, VOLUME24HOUR) {
+            console.log(PRICE)
             Io.emit(`realtime-price`, {PRICE, FROMSYMBOL, TOSYMBOL, VOLUME24HOUR});
         }
     });
